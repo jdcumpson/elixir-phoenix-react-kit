@@ -1,0 +1,20 @@
+{
+  "folders": [
+    {
+      "name": "phoenix",
+      "path": "."
+    },
+    {
+      "name": "assets",
+      "path": "example/test/assets"
+    }
+  ],
+  "settings": {
+    "javascript.suggest.autoImports": true,
+    "typescript.suggest.autoImports": true,
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.includeCompletionsForModuleExports": true,
+    "npm.packageManager": "yarn",
+    "typescript.npm": "yarn"
+  }
+}
