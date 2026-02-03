@@ -10,14 +10,12 @@ export enum ClientSize {
   MOBILE = 4,
 }
 
-export interface Metadata {
-  title: string
-  meta?: {
-    description?: string
-  }
+export interface ResponseOptions {
+  status?: number, statusText?: string, errorInfo?: {
+    message: string
+    stack?: string
+  } | null
 }
-
-export interface ResponseOptions { status?: number, statusText?: string }
 
 
 export interface ApplicationState {
@@ -29,8 +27,8 @@ export interface ApplicationState {
   args: ParsedQuery
   clientSize: ClientSize
   cfSiteKey: string | null
-  metadata: Metadata
   responseOptions?: ResponseOptions
+  locale: string
 }
 
 export const DEFAULT_STATE: ApplicationState = {
@@ -42,14 +40,12 @@ export const DEFAULT_STATE: ApplicationState = {
   args: {},
   clientSize: ClientSize.DESKTOP,
   cfSiteKey: null,
-  metadata: {
-    title: '',
-    meta: {}
-  },
   responseOptions: {
     status: 200,
     statusText: 'OK',
-  }
+    errorInfo: null
+  },
+  locale: 'en-US'
 }
 
 interface SetPathAction extends UnknownAction {
@@ -57,11 +53,9 @@ interface SetPathAction extends UnknownAction {
   // TODO: fixup payload type
   payload: {
     path: string
-    queryArgs?: Record<string, string | string[]>
-    pathArgs?: Record<string, string>
-    args?: SetPathAction['payload']['queryArgs'] &
-    SetPathAction['payload']['pathArgs']
-    metadata: Metadata
+    queryArgs?: ParsedQuery
+    pathArgs?: ParsedQuery
+    args?: ParsedQuery
   }
 }
 
@@ -70,18 +64,50 @@ interface SetClientSize extends UnknownAction {
   payload: ClientSize
 }
 
+interface RouteResult extends UnknownAction {
+  type: 'application/routeResult',
+  payload: {
+    status?: number
+    statusText?: string,
+    errorInfo?: {
+      message: string
+      stack?: string
+    }
+  }
+}
 
-export type ApplicationActions = | SetPathAction | SetClientSize
+
+export type ApplicationActions = | SetPathAction | SetClientSize | RouteResult
 
 export const applicationReducer: Reducer<ApplicationState, ApplicationActions> = (state: ApplicationState = DEFAULT_STATE, action) => {
 
   switch (action.type) {
     case 'application/setPath': {
-      return { ...state }
+      return {
+        ...state,
+        path: action.payload.path,
+        queryArgs: action.payload.queryArgs ?? {},
+        pathArgs: action.payload.pathArgs ?? {},
+        args: action.payload.args ?? {},
+        responseOptions: {
+          errorInfo: null
+        }
+      }
     }
 
     case 'application/setClientSize': {
       return { ...state, clientSize: action.payload }
+    }
+
+    case 'application/routeResult': {
+      return {
+        ...state, responseOptions: {
+          ...(state.responseOptions ?? {}),
+          status: action.payload.status,
+          statusText: action.payload.statusText,
+          errorInfo: action.payload.errorInfo ?? null
+        }
+      }
     }
 
     default: {

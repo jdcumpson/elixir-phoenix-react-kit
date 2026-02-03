@@ -4,15 +4,15 @@ defmodule PhoenixReactKit.SSR do
   @default_max_retries 5
   @default_timeout_ms 5_000
 
-  def render(assigns, opts \\ []) do
+  def render(conn, assigns, opts \\ []) do
     attempts = Keyword.get(opts, :attempts, 0)
     max_attempts = Keyword.get(opts, :max_attempts, @default_max_retries)
     timeout = Keyword.get(opts, :timeout, @default_timeout_ms)
 
     try do
-      %HTTPoison.Response{body: body} =
+      response =
         HTTPoison.post!(
-          url(),
+          "#{url()}#{conn.request_path}",
           Jason.encode!(
             %{assigns: assigns},
             escape: :javascript_safe
@@ -21,10 +21,12 @@ defmodule PhoenixReactKit.SSR do
             {"Content-Type", "text/html"},
             {"Accept", "*"}
           ],
-          recv_timeout: 100_000
+          recv_timeout: 100_000,
+          stream_to: self(),
+          async: :once
         )
 
-      body
+      loop(conn, response)
     rescue
       HTTPoison.Error ->
         if attempts < max_attempts do
@@ -50,6 +52,33 @@ defmodule PhoenixReactKit.SSR do
 
       p ->
         "#{scheme}://#{host}:#{p}"
+    end
+  end
+
+  defp loop(%Plug.Conn{} = conn, %HTTPoison.AsyncResponse{id: id} = response, status \\ nil) do
+    receive do
+      %HTTPoison.AsyncStatus{id: ^id, code: code} ->
+        {:ok, response} = HTTPoison.stream_next(response)
+        loop(conn, response, code)
+
+      %HTTPoison.AsyncHeaders{id: ^id, headers: headers} ->
+        conn =
+          Enum.reduce(headers, conn, fn {k, v}, conn ->
+            Plug.Conn.put_resp_header(conn, k, v)
+          end)
+
+        conn = Plug.Conn.send_chunked(conn, status)
+
+        {:ok, response} = HTTPoison.stream_next(response)
+        loop(conn, response, status)
+
+      %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
+        {:ok, conn} = Plug.Conn.chunk(conn, chunk)
+        {:ok, response} = HTTPoison.stream_next(response)
+        loop(conn, response, status)
+
+      %HTTPoison.AsyncEnd{id: ^id} ->
+        conn
     end
   end
 end

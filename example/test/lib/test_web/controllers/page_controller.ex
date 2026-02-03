@@ -3,7 +3,6 @@ defmodule TestWeb.PageController do
   use TestWeb, :controller
 
   def ssr(conn, _params) do
-    text = SSR.render(%{"state" => %{"application" => %{"foo" => "bar"}}})
-    html(conn, text)
+    SSR.render(conn, %{"state" => %{"application" => %{"foo" => "bar"}}})
   end
 end

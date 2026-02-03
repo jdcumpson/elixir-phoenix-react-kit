@@ -3,6 +3,8 @@ import * as React from 'react'
 import { ThemeProvider, createTheme } from '@mui/material/styles'
 import type { ThemeOptions } from '@mui/material/styles'
 
+import { HistoryLink as Link } from '@/components/Link'
+
 
 interface AppThemeProps {
   children: React.ReactNode
@@ -78,12 +80,12 @@ export default function AppTheme(props: AppThemeProps) {
         },
         MuiLink: {
           defaultProps: {
-            // component: HistoryLink,
+            component: Link,
           },
         },
         MuiButtonBase: {
           defaultProps: {
-            // LinkComponent: HistoryLink,
+            LinkComponent: Link,
           },
         },
         MuiButton: {
@@ -101,7 +103,7 @@ export default function AppTheme(props: AppThemeProps) {
         },
         MuiIconButton: {
           defaultProps: {
-            // LinkComponent: HistoryLink,
+            LinkComponent: Link,
           },
         },
       },

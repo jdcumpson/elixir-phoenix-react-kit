@@ -1,10 +1,12 @@
 // import './index.css'
 import { StrictMode } from 'react'
 
+import merge from 'lodash.merge'
 import { hydrateRoot } from 'react-dom/client'
 
 import App from '@/App'
-import type { AppState } from '@/redux'
+import { DEFAULT_STATE } from '@/domains/app/redux'
+import { createStore, type AppState } from '@/redux'
 
 declare global {
   interface Window {
@@ -13,13 +15,18 @@ declare global {
 }
 
 const state = window.__STATE__ || {}
-const container = document.getElementById('app')
 
-if (container) {
-  hydrateRoot(
-    container,
-    <StrictMode>
-      <App state={state} />
-    </StrictMode>,
-  )
+const defaultState = {
+  application: {
+    ...DEFAULT_STATE
+  },
 }
+const store = createStore(merge({}, defaultState, state))
+
+
+hydrateRoot(
+  document,
+  <StrictMode>
+    <App store={store} />
+  </StrictMode>,
+)

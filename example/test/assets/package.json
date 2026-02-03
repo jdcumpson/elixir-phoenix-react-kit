@@ -11,6 +11,7 @@
     "@eslint/eslintrc": "^3.3.3",
     "@types/babel__traverse": "^7",
     "@types/express": "^5",
+    "@types/history": "^5.0.0",
     "@types/lodash.merge": "^4",
     "@types/react": "^19.2.9",
     "@types/react-dom": "^19.2.3",
@@ -24,7 +25,7 @@
     "vite": "^7.3.1"
   },
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch --include server.ts --include entry.server.tsx server.ts",
     "lint": "eslint .",
     "build:client": "vite build --outDir dist/client --ssrManifest",
     "build:server": "vite build --outDir dist/server --ssr src/entry.server.tsx"
@@ -32,12 +33,17 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/lab": "^7.0.1-beta.21",
     "@mui/material": "^7.3.7",
     "@vitejs/plugin-react": "^5.1.2",
     "express": "^5.2.1",
+    "history": "^5.3.0",
     "lodash.merge": "^4.6.2",
+    "path-to-regexp": "^8.3.0",
+    "query-string": "^9.3.1",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-error-boundary": "^6.1.0",
     "react-redux": "^9.1.2"
   }
 }

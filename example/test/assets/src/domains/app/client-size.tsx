@@ -87,3 +87,8 @@ export const useSyncClientSize = () => {
     }
   }, [sizeBits, currentSize])
 }
+
+export const WatchClientSize = () => {
+  useSyncClientSize()
+  return null
+}
