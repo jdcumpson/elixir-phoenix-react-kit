@@ -1,5 +1,8 @@
+import merge from "lodash.merge"
 import { ParsedQuery } from "query-string"
 import { Reducer, UnknownAction } from "redux"
+
+import { AppState } from "@/redux"
 
 
 export enum ClientSize {
@@ -76,8 +79,13 @@ interface RouteResult extends UnknownAction {
   }
 }
 
+export interface Merge extends UnknownAction {
+  type: 'merge',
+  payload: Partial<AppState>
+}
 
-export type ApplicationActions = | SetPathAction | SetClientSize | RouteResult
+
+export type ApplicationActions = | SetPathAction | SetClientSize | RouteResult | Merge
 
 export const applicationReducer: Reducer<ApplicationState, ApplicationActions> = (state: ApplicationState = DEFAULT_STATE, action) => {
 
@@ -108,6 +116,10 @@ export const applicationReducer: Reducer<ApplicationState, ApplicationActions> =
           errorInfo: action.payload.errorInfo ?? null
         }
       }
+    }
+
+    case 'merge': {
+      return merge({}, state, action.payload.application)
     }
 
     default: {

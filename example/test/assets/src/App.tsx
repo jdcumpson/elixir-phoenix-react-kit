@@ -1,16 +1,61 @@
-import React from "react"
+import React, { use, useEffect, useState } from "react"
 
 import CssBaseline from "@mui/material/CssBaseline"
-import { Provider } from "react-redux"
+import { Channel, Socket } from "phoenix"
+import { Provider, useDispatch } from "react-redux"
 
 import { WatchClientSize } from "@/domains/app/client-size"
 import ErrorPage from "@/domains/app/ErrorPage"
+import { useHistory } from "@/domains/app/history"
 import { route, useRouter } from "@/domains/app/router"
+import { UserSocketContext } from "@/domains/app/socket"
 import AppTheme from "@/domains/app/theme"
-import { ApplicationStore } from "@/redux"
+import { ApplicationStore, useSelector } from "@/redux"
 
 const HomePage = React.lazy(() => import('@/domains/home/HomePage'))
 const OtherPage = React.lazy(() => import('@/domains/other/OtherPage'))
+
+const ChannelListener = () => {
+  const { socket } = use(UserSocketContext)
+  const dispatch = useDispatch()
+  const history = useHistory()
+  const applicationState = useSelector(state => state.application)
+  const [channel, setChannel] = useState<Channel | null>(null)
+
+  useEffect(() => {
+    if (socket == null) {
+      return
+    }
+    const channel = socket.channel('user:1234', { application_state: applicationState })
+    setChannel(channel)
+  }, [socket])
+
+  useEffect(() => {
+    if (!channel) {
+      return
+    }
+    channel.on('action', action => {
+      dispatch(action)
+    })
+    channel.on('navigate', action => {
+      if (location.pathname !== action.path) {
+        history.push(action.path)
+      }
+    })
+
+    channel.join().receive('ok', (resp) => {
+      dispatch({ type: "merge", payload: resp })
+    }).receive('error', (resp) => {
+      console.error(resp)
+    })
+    return () => {
+      channel.off('action')
+      channel.off('navigate')
+    }
+  }, [channel])
+
+  return null
+}
 
 export default function App(props: { store: ApplicationStore }) {
 
@@ -18,6 +63,15 @@ export default function App(props: { store: ApplicationStore }) {
     route('/', HomePage),
     route('/other', OtherPage)
   ], { errorHandler: ErrorPage })
+
+  const [userSocket, setUserSocket] = useState<Socket | null>(null)
+
+
+  useEffect(() => {
+    const socket = new Socket('/socket')
+    void socket.connect()
+    setUserSocket(socket)
+  }, [])
 
 
   return (
@@ -32,7 +86,10 @@ export default function App(props: { store: ApplicationStore }) {
           <AppTheme>
             <CssBaseline enableColorScheme />
             <WatchClientSize />
-            <Router />
+            <UserSocketContext value={{ socket: userSocket }}>
+              <ChannelListener />
+              <Router />
+            </UserSocketContext>
           </AppTheme>
         </Provider>
       </body>

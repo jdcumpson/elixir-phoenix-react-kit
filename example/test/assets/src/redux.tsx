@@ -16,11 +16,16 @@ import {
   ApplicationActions,
   applicationReducer,
 } from '@/domains/app/redux'
+import {
+  UserActions,
+  userReducer,
+} from '@/domains/user/redux'
 
 export const createStore = (ssrState: Record<string, unknown>) => {
   return configureStore({
     reducer: combineReducers({
       application: applicationReducer,
+      user: userReducer,
     }),
     middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
     devTools: true,
@@ -30,7 +35,7 @@ export const createStore = (ssrState: Record<string, unknown>) => {
 
 export type ApplicationStore = ReturnType<typeof createStore>
 export type AppState = ReturnType<ApplicationStore['getState']>
-export type AppDispatch = Dispatch<ApplicationActions>
+export type AppDispatch = Dispatch<ApplicationActions | UserActions>
 export type AppGetState = () => AppState
 
 export const useSelector: TypedUseSelectorHook<AppState> = (

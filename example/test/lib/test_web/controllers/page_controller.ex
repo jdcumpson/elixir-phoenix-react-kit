@@ -3,6 +3,8 @@ defmodule TestWeb.PageController do
   use TestWeb, :controller
 
   def ssr(conn, _params) do
-    SSR.render(conn, %{"state" => %{"application" => %{"foo" => "bar"}}})
+    SSR.render(conn, %{
+      "state" => %{"application" => %{"csrfToken" => get_csrf_token()}}
+    })
   end
 end

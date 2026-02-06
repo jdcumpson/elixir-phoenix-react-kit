@@ -9,12 +9,18 @@ defmodule TestWeb.Endpoint do
     store: :cookie,
     key: "_test_key",
     signing_salt: "S/PE2Nf1",
+    encryption_salt: "23/3%s1!",
     same_site: "Lax"
   ]
 
   socket("/live", Phoenix.LiveView.Socket,
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
+  )
+
+  socket("/socket", TestWeb.UserSocket,
+    websocket: [connect_info: [session: @session_options]],
+    longpoll: false
   )
 
   # Serve at "/" the static files from "priv/static" directory.

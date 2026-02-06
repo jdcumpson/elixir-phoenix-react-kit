@@ -1278,6 +1278,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/phoenix@npm:^1":
+  version: 1.6.7
+  resolution: "@types/phoenix@npm:1.6.7"
+  checksum: 10c0/0ff8b6dc7d3d8d4a94d5b6bb4f7792db0d40ddef0dd722651929925663bd6aade2a0d41453dbcf4a31bb65471a2c982b17ba3e43eb7abc31b50c20cc489364a4
+  languageName: node
+  linkType: hard
+
 "@types/prop-types@npm:^15.7.15":
   version: 15.7.15
   resolution: "@types/prop-types@npm:15.7.15"
@@ -4026,6 +4033,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"phoenix@npm:^1.8.3":
+  version: 1.8.3
+  resolution: "phoenix@npm:1.8.3"
+  checksum: 10c0/3888f090b3acdf68d06031d515c4faa49c096d28cf6d89902e8e2bad0eca80a4ea19f8bc0a88837bfa1127182c55ab6c2c11e808801824bf86eceaba3a088e65
+  languageName: node
+  linkType: hard
+
 "picocolors@npm:^1.1.1":
   version: 1.1.1
   resolution: "picocolors@npm:1.1.1"
@@ -4905,6 +4919,7 @@ __metadata:
     "@types/express": "npm:^5"
     "@types/history": "npm:^5.0.0"
     "@types/lodash.merge": "npm:^4"
+    "@types/phoenix": "npm:^1"
     "@types/react": "npm:^19.2.9"
     "@types/react-dom": "npm:^19.2.3"
     "@typescript-eslint/eslint-plugin": "npm:^8.53.1"
@@ -4917,6 +4932,7 @@ __metadata:
     history: "npm:^5.3.0"
     lodash.merge: "npm:^4.6.2"
     path-to-regexp: "npm:^8.3.0"
+    phoenix: "npm:^1.8.3"
     query-string: "npm:^9.3.1"
     react: "npm:^19.2.3"
     react-dom: "npm:^19.2.3"
