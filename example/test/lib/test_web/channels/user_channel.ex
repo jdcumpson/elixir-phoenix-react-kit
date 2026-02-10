@@ -1,10 +1,11 @@
 defmodule TestWeb.UserChannel do
+  alias Test.BlackScholes.RateCurve
+  alias Test.BlackScholes
+  alias Ecto.UUID
   use TestWeb, :channel
 
   @impl Phoenix.Channel
   def join("user:" <> user_id, payload, socket) do
-    dbg(socket)
-
     if authorized?(payload) do
       send(self(), {:after_join, payload})
       socket = assign(socket, :user_id, user_id)
@@ -50,6 +51,55 @@ defmodule TestWeb.UserChannel do
     {:reply, {:ok, payload}, socket}
   end
 
+  def handle_in("options", _payload, socket) do
+    uuid = UUID.autogenerate()
+
+    contracts = 1
+    underlying_asset_price = 25
+    expiry = ~D[2026-03-24]
+    strike_price = 32
+
+    {:ok, curve} =
+      RateCurve.fetch_treasury_curve()
+
+    Task.start(fn ->
+      iv =
+        BlackScholes.implied_volatility(
+          underlying_asset_price,
+          :buy,
+          :call,
+          strike_price,
+          contracts,
+          1.32,
+          days_to_expiry: 45,
+          american: true,
+          steps: 200,
+          risk_free_curve: curve
+        )
+        |> dbg
+
+      range =
+        BlackScholes.price_for_range(
+          {15, 35, 1},
+          {~D[2026-02-01], expiry, 25},
+          :buy,
+          :call,
+          underlying_asset_price,
+          contracts,
+          iv,
+          expiry_date: expiry,
+          risk_free_curve: curve,
+          american: true
+        )
+        |> dbg
+
+      push(socket, "options:#{uuid}", %{data: range})
+      push(socket, "options:#{uuid}:done", %{})
+    end)
+
+    {:reply, {:ok, uuid}, socket}
+  end
+
   # It is also common to receive messages from the client and
   # broadcast to everyone in the current topic (general:lobby).
   @impl true
@@ -60,8 +110,6 @@ defmodule TestWeb.UserChannel do
 
   # Add authorization logic here as required.
   defp authorized?(payload) do
-    dbg(payload)
-
     true
   end
 end

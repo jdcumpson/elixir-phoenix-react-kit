@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
 
 
-export default defineConfig(({mode}) => {
+export default defineConfig(({ mode }) => {
   const dev = mode === "development";
 
   return {
@@ -20,6 +20,18 @@ export default defineConfig(({mode}) => {
       strictPort: true,
       origin: "http://localhost:4100",
       cors: true
-    }
+    },
+    ssr: {
+      noExternal: [
+        "@mui/x-data-grid",
+        "@mui/x-date-pickers",
+        "@mui/material",
+        "@mui/system",
+        "@mui/private-theming",
+      ],
+    },
+    optimizeDeps: {
+      include: ["@mui/x-data-grid"],
+    },
   }
 })

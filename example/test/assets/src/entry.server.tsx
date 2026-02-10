@@ -117,7 +117,6 @@ export async function render(
         response.on('finish', finish)
       },
       onError(error, errorInfo) {
-        console.error('Error during SSR', error, errorInfo.componentStack, response.writableFinished)
         response.off('finish', finish)
         if (response.writableFinished) {
           return
@@ -126,6 +125,9 @@ export async function render(
           let status = 500
           if (error instanceof NotFoundError) {
             status = 404
+          } else {
+            // TODO: implement logging levels for debugging
+            console.error('Error during SSR', error, errorInfo.componentStack, response.writableFinished)
           }
           try {
             store.dispatch({
@@ -164,6 +166,7 @@ export async function render(
             }
           }
         } else {
+          console.error('Error during SSR', error, errorInfo.componentStack, response.writableFinished)
           response.end(error)
         }
       }

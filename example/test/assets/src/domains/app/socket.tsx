@@ -1,9 +1,10 @@
 import * as React from "react"
 
-import { Socket } from "phoenix"
+import { Channel, Socket } from "phoenix"
 
 
-export const UserSocketContext = React.createContext<{ socket: Socket | null }>({
-  socket: null
+export const UserSocketContext = React.createContext<{ socket: Socket | null, userChannel: Channel | null }>({
+  socket: null,
+  userChannel: null
 })
 

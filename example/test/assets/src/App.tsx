@@ -14,19 +14,35 @@ import { ApplicationStore, useSelector } from "@/redux"
 
 const HomePage = React.lazy(() => import('@/domains/home/HomePage'))
 const OtherPage = React.lazy(() => import('@/domains/other/OtherPage'))
+const OptionsPage = React.lazy(() => import('@/domains/options/OptionsPage'))
 
-const ChannelListener = () => {
-  const { socket } = use(UserSocketContext)
+const ChannelListener = ({ children }: React.PropsWithChildren) => {
+  const userContext = use(UserSocketContext)
+  const { socket: contextSocket } = userContext
   const dispatch = useDispatch()
   const history = useHistory()
   const applicationState = useSelector(state => state.application)
+  const [socket, setSocket] = useState<Socket | null>(contextSocket)
   const [channel, setChannel] = useState<Channel | null>(null)
+  const [value, setValue] = useState<typeof userContext>(userContext)
+
+  useEffect(() => {
+    if (contextSocket != null) {
+      return
+    }
+    const socket = new Socket('/socket')
+    void socket.connect()
+    userContext.socket = socket
+    setSocket(socket)
+  }, [contextSocket])
 
   useEffect(() => {
     if (socket == null) {
       return
     }
+    console.info(socket)
     const channel = socket.channel('user:1234', { application_state: applicationState })
+    userContext.userChannel = channel
     setChannel(channel)
   }, [socket])
 
@@ -45,6 +61,7 @@ const ChannelListener = () => {
 
     channel.join().receive('ok', (resp) => {
       dispatch({ type: "merge", payload: resp })
+      setValue({ ...userContext })
     }).receive('error', (resp) => {
       console.error(resp)
     })
@@ -54,25 +71,16 @@ const ChannelListener = () => {
     }
   }, [channel])
 
-  return null
+  return <UserSocketContext value={value}>{children}</UserSocketContext>
 }
 
 export default function App(props: { store: ApplicationStore }) {
 
   const { Router } = useRouter([
+    route('/other', OtherPage),
+    route('/options', OptionsPage),
     route('/', HomePage),
-    route('/other', OtherPage)
   ], { errorHandler: ErrorPage })
-
-  const [userSocket, setUserSocket] = useState<Socket | null>(null)
-
-
-  useEffect(() => {
-    const socket = new Socket('/socket')
-    void socket.connect()
-    setUserSocket(socket)
-  }, [])
-
 
   return (
     <html>
@@ -86,13 +94,12 @@ export default function App(props: { store: ApplicationStore }) {
           <AppTheme>
             <CssBaseline enableColorScheme />
             <WatchClientSize />
-            <UserSocketContext value={{ socket: userSocket }}>
-              <ChannelListener />
+            <ChannelListener>
               <Router />
-            </UserSocketContext>
+            </ChannelListener>
           </AppTheme>
         </Provider>
       </body>
-    </html>
+    </html >
   )
 }
