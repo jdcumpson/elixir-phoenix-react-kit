@@ -35,7 +35,8 @@
     "dev": "tsx watch --include server.ts --include entry.server.tsx server.ts",
     "lint": "eslint .",
     "build:client": "vite build --outDir dist/client --ssrManifest && mkdir -p ../priv/static/assets && cp dist/client/assets/* ../priv/static/assets ",
-    "build:server": "vite build --outDir dist/server --ssr src/entry.server.tsx"
+    "build:server": "vite build --outDir dist/server --ssr src/entry.server.tsx",
+    "prod": "yarn tsx server.ts"
   },
   "dependencies": {
     "@date-fns/tz": "^1.4.1",
