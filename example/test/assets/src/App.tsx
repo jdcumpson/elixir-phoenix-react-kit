@@ -79,14 +79,9 @@ const ChannelListener = ({ children }: React.PropsWithChildren) => {
 }
 
 export default function App(props: { store: ApplicationStore }) {
-  const { Router } = useRouter(
-    [
-      route('/other', OtherPage),
-      route('/options', OptionsPage),
-      route('/', HomePage),
-    ],
-    { errorHandler: ErrorPage },
-  )
+  const { Router } = useRouter([route('/', OptionsPage)], {
+    errorHandler: ErrorPage,
+  })
 
   return (
     <html>
