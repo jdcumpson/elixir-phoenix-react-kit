@@ -1,7 +1,8 @@
 defmodule TestWeb.UserChannel do
+  alias Test.Ticker
+  alias Test.Equities
   alias Test.BlackScholes.RateCurve
   alias Test.BlackScholes
-  alias Ecto.UUID
   use TestWeb, :channel
 
   @impl Phoenix.Channel
@@ -22,7 +23,7 @@ defmodule TestWeb.UserChannel do
   end
 
   @impl true
-  def handle_info({:after_join, payload}, socket) do
+  def handle_info({:after_join, _payload}, socket) do
     user_id = socket.assigns[:user_id]
 
     # Example: fetch something for this user
@@ -51,65 +52,115 @@ defmodule TestWeb.UserChannel do
     {:reply, {:ok, payload}, socket}
   end
 
-  def handle_in("options", _payload, socket) do
-    uuid = UUID.autogenerate()
+  def handle_in(
+        "predictions",
+        %{
+          "id" => id,
+          "symbol" => symbol,
+          "option" =>
+            %{
+              "expirationDate" => expiration,
+              "strike" => strike_price,
+              "price" => option_price,
+              "type" => type,
+              "buyOrWrite" => buy_or_write
+            } = input_option
+        } = payload,
+        socket
+      ) do
+    {:ok, data} = Ticker.get(symbol)
 
-    contracts = 1
-    underlying_asset_price = 25
-    expiry = ~D[2026-03-24]
-    strike_price = 32
+    underlying_asset_price =
+      get_in(data, ["postMarketPrice", "raw"]) || get_in(data, ["regularMarketPrice", "raw"]) ||
+        raise "Invalid price"
+
+    [start_price, end_price] =
+      case Map.get(payload, "range", [underlying_asset_price * 0.5, underlying_asset_price * 1.5]) do
+        [nil, nil] -> [underlying_asset_price * 0.5, underlying_asset_price * 1.5]
+        [nil, upper] -> [underlying_asset_price * 0.5, upper]
+        [lower, nil] -> [lower, underlying_asset_price * 1.5]
+        [lower, upper] -> [lower, upper]
+      end
+
+    step = (end_price - start_price) / 25
+
+    contracts = Map.get(payload, "contracts", 1)
+
+    expiry =
+      expiration
+      |> DateTime.from_unix!()
+      |> DateTime.to_date()
+
+    today = DateTime.utc_now() |> DateTime.to_date()
+    days_to_expiry = Date.diff(expiry, today)
+
+    buy_or_write = String.to_existing_atom(buy_or_write)
+    type = String.to_existing_atom(type)
 
     {:ok, curve} =
       RateCurve.fetch_treasury_curve()
 
     Task.start(fn ->
       iv =
-        BlackScholes.implied_volatility(
-          underlying_asset_price,
-          :buy,
-          :call,
-          strike_price,
-          contracts,
-          1.32,
-          days_to_expiry: 45,
-          american: true,
-          steps: 200,
-          risk_free_curve: curve
-        )
-        |> dbg
+        Map.get(input_option, "iv") ||
+          BlackScholes.implied_volatility(
+            underlying_asset_price,
+            buy_or_write,
+            type,
+            strike_price,
+            contracts,
+            option_price * contracts * 100,
+            days_to_expiry: days_to_expiry,
+            american: true,
+            steps: 200,
+            risk_free_curve: curve
+          )
 
-      range =
-        BlackScholes.price_for_range(
-          {15, 35, 1},
-          {~D[2026-02-01], expiry, 25},
-          :buy,
-          :call,
-          underlying_asset_price,
-          contracts,
-          iv,
-          expiry_date: expiry,
-          risk_free_curve: curve,
-          american: true
-        )
-        |> dbg
+      BlackScholes.price_for_range(
+        {start_price, end_price, step},
+        {today, expiry, 25},
+        buy_or_write,
+        type,
+        option_price,
+        strike_price,
+        contracts,
+        iv,
+        expiry_date: expiry,
+        risk_free_curve: curve,
+        american: true
+      )
+      |> Stream.chunk_every(25)
+      |> Stream.map(fn maps ->
+        # push(socket, "options:#{uuid}", %{data: map})
+        push(socket, "action", %{
+          type: "predictions/stream",
+          payload: %{
+            id: id,
+            data: maps
+          }
+        })
+      end)
+      |> Stream.run()
 
-      push(socket, "options:#{uuid}", %{data: range})
-      push(socket, "options:#{uuid}:done", %{})
+      push(socket, "action", %{
+        type: "predictions/receive",
+        payload: %{
+          id: id
+        }
+      })
     end)
 
-    {:reply, {:ok, uuid}, socket}
+    {:reply, {:ok, id}, socket}
   end
 
-  # It is also common to receive messages from the client and
-  # broadcast to everyone in the current topic (general:lobby).
-  @impl true
-  def handle_in("shout", payload, socket) do
-    broadcast(socket, "shout", payload)
-    {:noreply, socket}
+  def handle_in("equities_search", %{"id" => _id, "search" => search}, socket) do
+    result = Equities.search(search)
+
+    {:reply, {:ok, result}, socket}
   end
 
   # Add authorization logic here as required.
-  defp authorized?(payload) do
+  defp authorized?(_payload) do
     true
   end
 end

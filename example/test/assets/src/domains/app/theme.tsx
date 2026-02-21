@@ -1,10 +1,9 @@
 import * as React from 'react'
 
-import { ThemeProvider, createTheme } from '@mui/material/styles'
+import { ThemeProvider, alpha, createTheme } from '@mui/material/styles'
 import type { ThemeOptions } from '@mui/material/styles'
 
 import { HistoryLink as Link } from '@/components/Link'
-
 
 interface AppThemeProps {
   children: React.ReactNode
@@ -40,6 +39,18 @@ export default function AppTheme(props: AppThemeProps) {
           mobile: 0,
           desktop: 1280,
           xl: 1500,
+        },
+      },
+      palette: {
+        text: {
+          secondary: '#A8A8A8',
+          accent: 'rgb(151,71,221)',
+        },
+        primary: {
+          main: 'rgb(151,71,221)',
+        },
+        secondary: {
+          main: 'rgb(58, 244, 158)',
         },
       },
       typography: {
@@ -98,6 +109,103 @@ export default function AppTheme(props: AppThemeProps) {
                   boxShadow: 'none',
                 },
               }),
+            }),
+          },
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.text.accent,
+              },
+            }),
+          },
+        },
+        MuiInputLabel: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              color: theme.palette.text.secondary,
+              '&.Mui-focused': {
+                color: theme.palette.text.secondary,
+              },
+            }),
+          },
+        },
+        MuiInputBase: {
+          styleOverrides: {
+            input: ({ theme }) => ({
+              '&::placeholder': {
+                color: theme.palette.text.secondary,
+                opacity: 1,
+              },
+            }),
+          },
+        },
+        MuiSelect: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': {
+                borderColor: theme.palette.text.accent,
+              },
+            }),
+          },
+        },
+        MuiAutocomplete: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              '& .MuiOutlinedInput-root:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline':
+                {
+                  borderColor: theme.palette.text.accent,
+                },
+            }),
+            option: ({ theme }) => ({
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.text.accent, 0.14),
+              },
+            }),
+            paper: ({ theme }) => ({
+              '& .MuiAutocomplete-option.Mui-focused, & .MuiAutocomplete-option.Mui-focusVisible':
+                {
+                  backgroundColor: `${alpha(theme.palette.text.accent, 0.14)} !important`,
+                },
+              '& .MuiAutocomplete-option[aria-selected="true"]': {
+                backgroundColor: `${alpha(theme.palette.text.accent, 0.22)} !important`,
+              },
+              '& .MuiAutocomplete-option[aria-selected="true"].Mui-focused, & .MuiAutocomplete-option[aria-selected="true"]:hover, & .MuiAutocomplete-option[aria-selected="true"].Mui-focusVisible':
+                {
+                  backgroundColor: `${alpha(theme.palette.text.accent, 0.28)} !important`,
+                },
+            }),
+            listbox: ({ theme }) => ({
+              '& .MuiAutocomplete-option[aria-selected="true"]': {
+                backgroundColor: `${alpha(theme.palette.text.accent, 0.22)} !important`,
+              },
+              '& .MuiAutocomplete-option[aria-selected="true"].Mui-focused, & .MuiAutocomplete-option[aria-selected="true"]:hover':
+                {
+                  backgroundColor: `${alpha(theme.palette.text.accent, 0.28)} !important`,
+                },
+              '& .MuiAutocomplete-option[aria-selected="true"].Mui-focusVisible':
+                {
+                  backgroundColor: `${alpha(theme.palette.text.accent, 0.28)} !important`,
+                },
+            }),
+          },
+        },
+        MuiMenuItem: {
+          styleOverrides: {
+            root: ({ theme }) => ({
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.text.accent, 0.14),
+              },
+              '&&.Mui-selected': {
+                backgroundColor: `${alpha(theme.palette.text.accent, 0.22)} !important`,
+              },
+              '&&.Mui-selected:hover': {
+                backgroundColor: `${alpha(theme.palette.text.accent, 0.28)} !important`,
+              },
+              '&&.Mui-selected.Mui-focusVisible': {
+                backgroundColor: `${alpha(theme.palette.text.accent, 0.28)} !important`,
+              },
             }),
           },
         },

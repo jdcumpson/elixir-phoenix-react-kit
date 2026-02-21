@@ -32,7 +32,7 @@ defmodule PhoenixReactKit.SSR do
         if attempts < max_attempts do
           Logger.warning("Retrying ssr fetch, attempt: #{attempts + 1}")
           Process.sleep(timeout)
-          render(assigns, Keyword.put(opts, :attempts, attempts + 1))
+          render(conn, assigns, Keyword.put(opts, :attempts, attempts + 1))
         else
           {:error, :cannot_fetch_ssr}
         end

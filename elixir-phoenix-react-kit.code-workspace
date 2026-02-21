@@ -7,6 +7,9 @@
     {
       "name": "assets",
       "path": "example/test/assets"
+    },
+    {
+      "path": "example/test"
     }
   ],
   "settings": {

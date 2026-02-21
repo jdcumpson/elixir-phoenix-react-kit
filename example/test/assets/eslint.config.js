@@ -4,6 +4,8 @@ import tsParser from "@typescript-eslint/parser";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
 import reactPlugin from "eslint-plugin-react";
 import importPlugin from "eslint-plugin-import";
+import prettierConfig from "eslint-config-prettier";
+import prettierPlugin from "eslint-plugin-prettier";
 import { fileURLToPath } from "node:url";
 import { dirname } from "node:path";
 
@@ -113,6 +115,16 @@ export default [
         },
       ],
       "prefer-const": "off",
+    },
+  },
+  prettierConfig,
+  {
+    files: ["**/*.{js,jsx,ts,tsx}"],
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    rules: {
+      "prettier/prettier": "error",
     },
   },
 ];

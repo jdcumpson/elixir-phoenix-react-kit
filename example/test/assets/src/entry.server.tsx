@@ -33,9 +33,9 @@ function createInlineModuleInjector(scripts: string[]) {
     return null
   }
 
-  const injection = scripts
-    .map((code) => `<script type="module">${code}</script>`)
-    .join('') + '\n<script type="module" src="http://localhost:4100/@vite/client"></script>'
+  const injection =
+    scripts.map((code) => `<script type="module">${code}</script>`).join('') +
+    '\n<script type="module" src="http://localhost:4100/@vite/client"></script>'
 
   let injected = false
   let tail = ''
@@ -66,7 +66,7 @@ function createInlineModuleInjector(scripts: string[]) {
       cb()
     },
     flush(cb) {
-      if (tail != null && tail !== "") {
+      if (tail != null && tail !== '') {
         this.push(tail)
       }
       cb()
@@ -79,98 +79,157 @@ export async function render(
   response: Response,
   inlineModuleScripts: string[] = [],
 ) {
-
   response.setHeader('Content-Type', 'text/html')
   if (request.method === 'GET') {
     response.status(400).end('Bad Request')
   }
-  const body = await readJsonBody<{ assigns: { state: Partial<AppState> } }>(request)
+  const body = await readJsonBody<{ assigns: { state: Partial<AppState> } }>(
+    request,
+  )
 
   const defaultState = {
     application: {
-      ...DEFAULT_STATE
+      ...DEFAULT_STATE,
     },
   }
   const appState: Partial<ApplicationState> = {
-    path: request.originalUrl
+    path: request.originalUrl,
   }
-  const store = createStore(merge({}, defaultState, { application: appState }, body?.assigns.state ?? {}))
+  const store = createStore(
+    merge(
+      {},
+      defaultState,
+      { application: appState },
+      body?.assigns.state ?? {},
+    ),
+  )
 
   return new Promise((resolve) => {
     const finish = () => resolve(response)
-    const { pipe, abort } = renderToPipeableStream(<>
-      <StrictMode>
-        <App store={store} />
-      </StrictMode>
-    </>, {
-      bootstrapModules: [`http://localhost:4100/src/entry.client.tsx`],
-      onShellReady: () => {
-        response.status(store.getState().application.responseOptions?.status ?? 200)
-        const injector = createInlineModuleInjector(inlineModuleScripts.concat(`window.__STATE__ = ${JSON.stringify(store.getState(), null, 2)}`))
-        if (injector) {
-          pipe(injector)
-          injector.pipe(response)
-        } else {
-          pipe(response)
-        }
-
-        response.on('finish', finish)
-      },
-      onError(error, errorInfo) {
-        response.off('finish', finish)
-        if (response.writableFinished) {
-          return
-        }
-        if (error instanceof Error) {
-          let status = 500
-          if (error instanceof NotFoundError) {
-            status = 404
+    const { pipe, abort } = renderToPipeableStream(
+      <>
+        <StrictMode>
+          <App store={store} />
+        </StrictMode>
+      </>,
+      {
+        bootstrapModules: [`http://localhost:4100/src/entry.client.tsx`],
+        onShellReady: () => {
+          response.status(
+            store.getState().application.responseOptions?.status ?? 200,
+          )
+          const injector = createInlineModuleInjector(
+            inlineModuleScripts.concat(
+              `window.__STATE__ = ${JSON.stringify(store.getState(), null, 2)}`,
+            ),
+          )
+          if (injector) {
+            pipe(injector)
+            injector.pipe(response)
           } else {
-            // TODO: implement logging levels for debugging
-            console.error('Error during SSR', error, errorInfo.componentStack, response.writableFinished)
+            pipe(response)
           }
-          try {
-            store.dispatch({
-              type: 'application/routeResult', payload: {
-                status,
-                errorInfo: {
-                  message: error.message,
-                  stack: errorInfo.componentStack,
-                }
-              }
-            })
-            const { pipe } = renderToPipeableStream(<StrictMode>
-              <App store={store} />
-            </StrictMode>, {
-              bootstrapModules: [`http://localhost:4100/src/entry.client.tsx`],
-              onShellReady() {
-                response.status(status)
-                const injector = createInlineModuleInjector(inlineModuleScripts.concat(`window.__STATE__ = ${JSON.stringify(store.getState(), null, 2)}`))
-                if (injector) {
-                  pipe(injector)
-                  injector.pipe(response)
-                } else {
-                  pipe(response)
-                }
 
-                response.on('finish', () => {
-                  resolve(response)
-                })
-              }
-            })
-          } catch (e) {
-            if (e instanceof Error) {
-              response.end(renderToString(<html><ErrorPage error={{ message: error.message, stack: errorInfo.componentStack }} /></html>))
-            } else {
-              response.end(renderToString(<html><ErrorPage error={{ message: String(e), stack: errorInfo.componentStack }} /></html>))
-            }
+          response.on('finish', finish)
+        },
+        onError(error, errorInfo) {
+          response.off('finish', finish)
+          if (response.writableFinished) {
+            return
           }
-        } else {
-          console.error('Error during SSR', error, errorInfo.componentStack, response.writableFinished)
-          response.end(error)
-        }
-      }
-    })
+          if (error instanceof Error) {
+            let status = 500
+            if (error instanceof NotFoundError) {
+              status = 404
+            } else {
+              // TODO: implement logging levels for debugging
+              console.error(
+                'Error during SSR',
+                error,
+                errorInfo.componentStack,
+                response.writableFinished,
+              )
+            }
+            try {
+              store.dispatch({
+                type: 'application/routeResult',
+                payload: {
+                  status,
+                  errorInfo: {
+                    message: error.message,
+                    stack: errorInfo.componentStack,
+                  },
+                },
+              })
+              const { pipe } = renderToPipeableStream(
+                <StrictMode>
+                  <App store={store} />
+                </StrictMode>,
+                {
+                  bootstrapModules: [
+                    `http://localhost:4100/src/entry.client.tsx`,
+                  ],
+                  onShellReady() {
+                    response.status(status)
+                    const injector = createInlineModuleInjector(
+                      inlineModuleScripts.concat(
+                        `window.__STATE__ = ${JSON.stringify(store.getState(), null, 2)}`,
+                      ),
+                    )
+                    if (injector) {
+                      pipe(injector)
+                      injector.pipe(response)
+                    } else {
+                      pipe(response)
+                    }
+
+                    response.on('finish', () => {
+                      resolve(response)
+                    })
+                  },
+                },
+              )
+            } catch (e) {
+              if (e instanceof Error) {
+                response.end(
+                  renderToString(
+                    <html>
+                      <ErrorPage
+                        error={{
+                          message: error.message,
+                          stack: errorInfo.componentStack,
+                        }}
+                      />
+                    </html>,
+                  ),
+                )
+              } else {
+                response.end(
+                  renderToString(
+                    <html>
+                      <ErrorPage
+                        error={{
+                          message: String(e),
+                          stack: errorInfo.componentStack,
+                        }}
+                      />
+                    </html>,
+                  ),
+                )
+              }
+            }
+          } else {
+            console.error(
+              'Error during SSR',
+              error,
+              errorInfo.componentStack,
+              response.writableFinished,
+            )
+            response.end(error)
+          }
+        },
+      },
+    )
     setTimeout(() => {
       abort('Rendering took too long, timeout')
     }, 10000)

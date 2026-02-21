@@ -25,7 +25,7 @@ config :test, TestWeb.Endpoint,
   debug_errors: true,
   secret_key_base: "C9RswqndOhRMZ3jywU0iRg9CQkG4iY2qwKIwZDxxq/N8O6/dnTu3YBiJphGiXnKF",
   watchers: [
-    vite: {PhoenixReactKit.Vite, :install_and_run, [:test, ~w(yarn dev)]}
+    # vite: {PhoenixReactKit.Vite, :install_and_run, [:test, ~w(yarn dev)]}
   ]
 
 # ## SSL Support

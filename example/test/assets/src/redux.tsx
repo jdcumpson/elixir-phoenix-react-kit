@@ -12,30 +12,32 @@ import {
   useDispatch as genericUseDispatch,
 } from 'react-redux'
 
+import { ApplicationActions, applicationReducer } from '@/domains/app/redux'
 import {
-  ApplicationActions,
-  applicationReducer,
-} from '@/domains/app/redux'
-import {
-  UserActions,
-  userReducer,
-} from '@/domains/user/redux'
+  Actions as OptionsActions,
+  reducer as optionsReducer,
+} from '@/domains/options/redux'
+import { UserActions, userReducer } from '@/domains/user/redux'
 
 export const createStore = (ssrState: Record<string, unknown>) => {
   return configureStore({
     reducer: combineReducers({
       application: applicationReducer,
       user: userReducer,
+      options: optionsReducer,
     }),
     middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
-    devTools: true,
+    devTools: {
+      maxAge: 1000,
+    },
     preloadedState: ssrState,
   })
 }
 
 export type ApplicationStore = ReturnType<typeof createStore>
 export type AppState = ReturnType<ApplicationStore['getState']>
-export type AppDispatch = Dispatch<ApplicationActions | UserActions>
+export type AppActions = ApplicationActions | UserActions | OptionsActions
+export type AppDispatch = Dispatch<AppActions>
 export type AppGetState = () => AppState
 
 export const useSelector: TypedUseSelectorHook<AppState> = (
@@ -45,8 +47,5 @@ export const useSelector: TypedUseSelectorHook<AppState> = (
   return genericUseSelector(callback)
 }
 
-export const useDispatch: () => ThunkDispatch<
-  AppState,
-  unknown,
-  ApplicationActions
-> = genericUseDispatch
+export const useDispatch: () => ThunkDispatch<AppState, unknown, AppActions> =
+  genericUseDispatch

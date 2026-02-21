@@ -4,7 +4,6 @@ import MuiLoadingButton from '@mui/lab/LoadingButton'
 import MuiButton, { ButtonProps } from '@mui/material/Button'
 import MuiIconButton, { IconButtonProps } from '@mui/material/IconButton'
 
-
 import { type HistoryLinkProps } from '@/components/Link'
 
 type Props = ButtonProps & HistoryLinkProps
@@ -18,7 +17,6 @@ export const Button = React.forwardRef(function Button(
 ) {
   return <MuiButton {...props} ref={ref} />
 })
-
 
 export const IconButton = React.forwardRef(function IconButton(
   props: IconProps,

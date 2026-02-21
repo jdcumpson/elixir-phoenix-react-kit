@@ -10,7 +10,7 @@ defmodule Test.BlackScholes do
   @default_dividend_yield 0.0
   @default_carry_rate 0.0
   @default_contract_size 100
-  @default_steps 200
+  @default_steps 75
 
   @type option_side :: :buy | :write | :long | :short | String.t()
   @type option_kind :: :call | :put | String.t()
@@ -59,7 +59,8 @@ defmodule Test.BlackScholes do
     price_per_share =
       price_per_share(underlying_price, call_or_put, strike_price, implied_volatility, opts)
 
-    price_per_share * contracts * contract_size * side_multiplier
+    (price_per_share * contracts * contract_size * side_multiplier)
+    |> Float.round(2)
   end
 
   @doc """
@@ -208,14 +209,6 @@ defmodule Test.BlackScholes do
       abs(target_price_per_share - price_upper) <= tolerance ->
         vol_upper
 
-      target_price_per_share < price_lower - tolerance ->
-        raise ArgumentError,
-              "market_price below model minimum; target=#{target_price_per_share}, min=#{price_lower}"
-
-      target_price_per_share > price_upper + tolerance ->
-        raise ArgumentError,
-              "market_price above model maximum; target=#{target_price_per_share}, max=#{price_upper}"
-
       true ->
         1..max_iterations
         |> Enum.reduce_while({vol_lower, vol_upper}, fn _, {low, high} ->
@@ -256,30 +249,12 @@ defmodule Test.BlackScholes do
   of the provided price and date ranges. Weekends are excluded. Dates must be
   strictly before the expiry date.
   """
-  @spec price_for_range(
-          price_range,
-          date_range,
-          option_side,
-          option_kind,
-          number,
-          number,
-          number
-        ) :: [[float]]
-  @spec price_for_range(
-          price_range,
-          date_range,
-          option_side,
-          option_kind,
-          number,
-          number,
-          number,
-          keyword
-        ) :: [[float]]
   def price_for_range(
         price_range,
         date_range,
         buy_or_write,
         call_or_put,
+        option_price,
         strike_price,
         contracts,
         implied_volatility,
@@ -289,20 +264,21 @@ defmodule Test.BlackScholes do
     dates = expand_date_range(date_range)
     expiry_date = fetch_expiry_date!(opts)
     days_to_expiry_list = Enum.map(dates, &days_until_expiry!(expiry_date, &1))
+    date_pairs = Enum.zip(dates, days_to_expiry_list)
 
     base_opts =
       opts
       |> Keyword.delete(:years_to_expiry)
       |> Keyword.delete(:days_to_expiry)
 
-    start_date = List.first(dates)
+    date_pricing_inputs = build_date_pricing_inputs(date_pairs, base_opts)
 
-    Enum.map(prices, fn underlying_price ->
-      Enum.map(days_to_expiry_list, fn days_to_expiry ->
+    Stream.flat_map(prices, fn underlying_price ->
+      Stream.map(date_pricing_inputs, fn {date, days_to_expiry, price_opts} ->
         %{
           underlying_price: underlying_price,
           days_to_expiry: days_to_expiry,
-          date: Date.add(start_date, round(days_to_expiry)),
+          date: date,
           price:
             price(
               underlying_price,
@@ -311,8 +287,9 @@ defmodule Test.BlackScholes do
               strike_price,
               contracts,
               implied_volatility,
-              Keyword.put(base_opts, :days_to_expiry, days_to_expiry)
-            )
+              price_opts
+            ),
+          cost: option_price * contracts * 100
         }
       end)
     end)
@@ -328,8 +305,12 @@ defmodule Test.BlackScholes do
   """
   @spec risk_free_rate_for_days(number, [rate_point]) :: float
   def risk_free_rate_for_days(days, curve) when is_number(days) and days >= 0 do
-    curve = validate_curve!(curve)
+    curve
+    |> validate_curve!()
+    |> risk_free_rate_for_days_from_curve(days)
+  end
 
+  defp risk_free_rate_for_days_from_curve(curve, days) do
     case Enum.find(curve, fn {d, _} -> d == days end) do
       {_, rate} ->
         rate
@@ -337,6 +318,34 @@ defmodule Test.BlackScholes do
       nil ->
         {lower, upper} = bounding_points(curve, days)
         interpolate_rate(lower, upper, days)
+    end
+  end
+
+  defp build_date_pricing_inputs(date_pairs, opts) do
+    case Keyword.fetch(opts, :risk_free_curve) do
+      {:ok, curve} ->
+        curve = validate_curve!(curve)
+
+        base_opts =
+          opts
+          |> Keyword.delete(:risk_free_curve)
+          |> Keyword.delete(:risk_free_rate)
+
+        Enum.map(date_pairs, fn {date, days_to_expiry} ->
+          risk_free_rate = risk_free_rate_for_days_from_curve(curve, days_to_expiry)
+
+          price_opts =
+            base_opts
+            |> Keyword.put(:days_to_expiry, days_to_expiry)
+            |> Keyword.put(:risk_free_rate, risk_free_rate)
+
+          {date, days_to_expiry, price_opts}
+        end)
+
+      :error ->
+        Enum.map(date_pairs, fn {date, days_to_expiry} ->
+          {date, days_to_expiry, Keyword.put(opts, :days_to_expiry, days_to_expiry)}
+        end)
     end
   end
 
@@ -554,7 +563,7 @@ defmodule Test.BlackScholes do
   defp validate_date_steps!(value),
     do: raise(ArgumentError, "date steps must be a positive integer, got: #{inspect(value)}")
 
-  defp validate_positive_integer!(value, name) when is_integer(value) and value > 0, do: value
+  defp validate_positive_integer!(value, _name) when is_integer(value) and value > 0, do: value
 
   defp validate_positive_integer!(value, name) when is_float(value) and value > 0 do
     if value == Float.floor(value) do
@@ -747,7 +756,7 @@ defmodule Test.BlackScholes do
   defp validate_curve!(_curve),
     do: raise(ArgumentError, "curve must be a non-empty list of {days, rate} tuples")
 
-  defp bounding_points([{days, rate} | _] = curve, target) when target < days do
+  defp bounding_points([{days, rate} | _], target) when target < days do
     {{days, rate}, {days, rate}}
   end
 

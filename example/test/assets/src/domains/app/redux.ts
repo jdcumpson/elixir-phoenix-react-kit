@@ -1,9 +1,8 @@
-import merge from "lodash.merge"
-import { ParsedQuery } from "query-string"
-import { Reducer, UnknownAction } from "redux"
+import merge from 'lodash.merge'
+import { ParsedQuery } from 'query-string'
+import { Reducer, UnknownAction } from 'redux'
 
-import { AppState } from "@/redux"
-
+import { AppState } from '@/redux'
 
 export enum ClientSize {
   XL = 0,
@@ -14,12 +13,13 @@ export enum ClientSize {
 }
 
 export interface ResponseOptions {
-  status?: number, statusText?: string, errorInfo?: {
+  status?: number
+  statusText?: string
+  errorInfo?: {
     message: string
     stack?: string
   } | null
 }
-
 
 export interface ApplicationState {
   path: string
@@ -46,9 +46,9 @@ export const DEFAULT_STATE: ApplicationState = {
   responseOptions: {
     status: 200,
     statusText: 'OK',
-    errorInfo: null
+    errorInfo: null,
   },
-  locale: 'en-US'
+  locale: 'en-US',
 }
 
 interface SetPathAction extends UnknownAction {
@@ -68,10 +68,10 @@ interface SetClientSize extends UnknownAction {
 }
 
 interface RouteResult extends UnknownAction {
-  type: 'application/routeResult',
+  type: 'application/routeResult'
   payload: {
     status?: number
-    statusText?: string,
+    statusText?: string
     errorInfo?: {
       message: string
       stack?: string
@@ -80,15 +80,20 @@ interface RouteResult extends UnknownAction {
 }
 
 export interface Merge extends UnknownAction {
-  type: 'merge',
+  type: 'merge'
   payload: Partial<AppState>
 }
 
+export type ApplicationActions =
+  | SetPathAction
+  | SetClientSize
+  | RouteResult
+  | Merge
 
-export type ApplicationActions = | SetPathAction | SetClientSize | RouteResult | Merge
-
-export const applicationReducer: Reducer<ApplicationState, ApplicationActions> = (state: ApplicationState = DEFAULT_STATE, action) => {
-
+export const applicationReducer: Reducer<
+  ApplicationState,
+  ApplicationActions
+> = (state: ApplicationState = DEFAULT_STATE, action) => {
   switch (action.type) {
     case 'application/setPath': {
       return {
@@ -98,8 +103,8 @@ export const applicationReducer: Reducer<ApplicationState, ApplicationActions> =
         pathArgs: action.payload.pathArgs ?? {},
         args: action.payload.args ?? {},
         responseOptions: {
-          errorInfo: null
-        }
+          errorInfo: null,
+        },
       }
     }
 
@@ -109,12 +114,13 @@ export const applicationReducer: Reducer<ApplicationState, ApplicationActions> =
 
     case 'application/routeResult': {
       return {
-        ...state, responseOptions: {
+        ...state,
+        responseOptions: {
           ...(state.responseOptions ?? {}),
           status: action.payload.status,
           statusText: action.payload.statusText,
-          errorInfo: action.payload.errorInfo ?? null
-        }
+          errorInfo: action.payload.errorInfo ?? null,
+        },
       }
     }
 

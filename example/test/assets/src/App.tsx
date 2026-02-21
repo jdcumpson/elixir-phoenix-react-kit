@@ -1,16 +1,16 @@
-import React, { use, useEffect, useState } from "react"
+import React, { use, useEffect, useState } from 'react'
 
-import CssBaseline from "@mui/material/CssBaseline"
-import { Channel, Socket } from "phoenix"
-import { Provider, useDispatch } from "react-redux"
+import CssBaseline from '@mui/material/CssBaseline'
+import { Channel, Socket } from 'phoenix'
+import { Provider, useDispatch } from 'react-redux'
 
-import { WatchClientSize } from "@/domains/app/client-size"
-import ErrorPage from "@/domains/app/ErrorPage"
-import { useHistory } from "@/domains/app/history"
-import { route, useRouter } from "@/domains/app/router"
-import { UserSocketContext } from "@/domains/app/socket"
-import AppTheme from "@/domains/app/theme"
-import { ApplicationStore, useSelector } from "@/redux"
+import { WatchClientSize } from '@/domains/app/client-size'
+import ErrorPage from '@/domains/app/ErrorPage'
+import { useHistory } from '@/domains/app/history'
+import { route, useRouter } from '@/domains/app/router'
+import { UserSocketContext } from '@/domains/app/socket'
+import AppTheme from '@/domains/app/theme'
+import { ApplicationStore, useSelector } from '@/redux'
 
 const HomePage = React.lazy(() => import('@/domains/home/HomePage'))
 const OtherPage = React.lazy(() => import('@/domains/other/OtherPage'))
@@ -21,7 +21,7 @@ const ChannelListener = ({ children }: React.PropsWithChildren) => {
   const { socket: contextSocket } = userContext
   const dispatch = useDispatch()
   const history = useHistory()
-  const applicationState = useSelector(state => state.application)
+  const applicationState = useSelector((state) => state.application)
   const [socket, setSocket] = useState<Socket | null>(contextSocket)
   const [channel, setChannel] = useState<Channel | null>(null)
   const [value, setValue] = useState<typeof userContext>(userContext)
@@ -40,8 +40,9 @@ const ChannelListener = ({ children }: React.PropsWithChildren) => {
     if (socket == null) {
       return
     }
-    console.info(socket)
-    const channel = socket.channel('user:1234', { application_state: applicationState })
+    const channel = socket.channel('user:1234', {
+      application_state: applicationState,
+    })
     userContext.userChannel = channel
     setChannel(channel)
   }, [socket])
@@ -50,21 +51,24 @@ const ChannelListener = ({ children }: React.PropsWithChildren) => {
     if (!channel) {
       return
     }
-    channel.on('action', action => {
+    channel.on('action', (action) => {
       dispatch(action)
     })
-    channel.on('navigate', action => {
+    channel.on('navigate', (action) => {
       if (location.pathname !== action.path) {
         history.push(action.path)
       }
     })
 
-    channel.join().receive('ok', (resp) => {
-      dispatch({ type: "merge", payload: resp })
-      setValue({ ...userContext })
-    }).receive('error', (resp) => {
-      console.error(resp)
-    })
+    channel
+      .join()
+      .receive('ok', (resp) => {
+        dispatch({ type: 'merge', payload: resp })
+        setValue({ ...userContext })
+      })
+      .receive('error', (resp) => {
+        console.error(resp)
+      })
     return () => {
       channel.off('action')
       channel.off('navigate')
@@ -75,19 +79,21 @@ const ChannelListener = ({ children }: React.PropsWithChildren) => {
 }
 
 export default function App(props: { store: ApplicationStore }) {
-
-  const { Router } = useRouter([
-    route('/other', OtherPage),
-    route('/options', OptionsPage),
-    route('/', HomePage),
-  ], { errorHandler: ErrorPage })
+  const { Router } = useRouter(
+    [
+      route('/other', OtherPage),
+      route('/options', OptionsPage),
+      route('/', HomePage),
+    ],
+    { errorHandler: ErrorPage },
+  )
 
   return (
     <html>
       <head>
-        <meta charSet="UTF-8" />
-        <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta charSet='UTF-8' />
+        <link rel='icon' type='image/svg+xml' href='/vite.svg' />
+        <meta name='viewport' content='width=device-width, initial-scale=1.0' />
       </head>
       <body>
         <Provider store={props.store}>
@@ -100,6 +106,6 @@ export default function App(props: { store: ApplicationStore }) {
           </AppTheme>
         </Provider>
       </body>
-    </html >
+    </html>
   )
 }

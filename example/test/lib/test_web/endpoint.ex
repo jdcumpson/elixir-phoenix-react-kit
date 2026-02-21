@@ -1,5 +1,4 @@
 defmodule TestWeb.Endpoint do
-  alias PhoenixReactKit.Vite
   use Phoenix.Endpoint, otp_app: :test
 
   # The session will be stored in the cookie and signed,

@@ -20,6 +20,7 @@ defmodule TestWeb.UserSocket do
   # for further details.
 
   channel("user:*", TestWeb.UserChannel)
+  channel("ticker:*", TestWeb.TickerChannel)
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

@@ -1,18 +1,16 @@
-import { useEffect } from "react"
+import { useEffect } from 'react'
 
-import { createBrowserHistory, createMemoryHistory } from "history"
-import merge from "lodash.merge"
+import { createBrowserHistory, createMemoryHistory } from 'history'
+import merge from 'lodash.merge'
 
-import { useDispatch } from "@/redux"
-
+import { useDispatch } from '@/redux'
 
 const history =
   typeof window === 'undefined' ? createMemoryHistory() : createBrowserHistory()
 
-
 export const useHistory = () => {
   return {
-    ...(history),
+    ...history,
     push(url: string, state = 'NOT_FIRST_ROUTE') {
       history?.push(url, state)
       window.scrollTo({ top: 0, behavior: 'instant' })
@@ -35,12 +33,13 @@ export const HistoryWatcher = () => {
       const pathArgs = {}
 
       dispatch({
-        type: 'application/setPath', payload: {
+        type: 'application/setPath',
+        payload: {
           path: url.pathname,
           queryArgs,
           pathArgs,
           args: merge(queryArgs, pathArgs),
-        }
+        },
       })
     })
   }, [history])

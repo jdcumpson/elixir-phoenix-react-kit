@@ -9,7 +9,6 @@ import queryString from 'query-string'
 import { useHistory } from '@/domains/app/history'
 import { useSelector } from '@/redux'
 
-
 export type HistoryLinkProps = LinkBaseProps &
   LinkProps & {
     to?: string

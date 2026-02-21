@@ -18,11 +18,11 @@ const state = window.__STATE__ || {}
 
 const defaultState = {
   application: {
-    ...DEFAULT_STATE
+    ...DEFAULT_STATE,
   },
 }
-const store = createStore(merge({}, defaultState, state))
 
+const store = createStore(merge({}, defaultState, state))
 
 hydrateRoot(
   document,

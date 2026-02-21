@@ -11,6 +11,8 @@ config :test,
   ecto_repos: [Test.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :elixir, :time_zone_database, Tz.TimeZoneDatabase
+
 # Configure the endpoint
 config :test, TestWeb.Endpoint,
   url: [host: "localhost"],

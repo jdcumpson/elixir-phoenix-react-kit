@@ -58,7 +58,8 @@ defmodule Test.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:phoenix_react_kit, path: "../../"},
-      {:httpoison, "~> 2.0"}
+      {:httpoison, "~> 2.0"},
+      {:tz, "~> 0.28"}
     ]
   end
 

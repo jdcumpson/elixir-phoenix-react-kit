@@ -1,7 +1,13 @@
-import { useSelector } from "@/redux"
+import { useSelector } from '@/redux'
 
-export default function ErrorPage({ error }: { error: { message: string, stack?: string } }) {
-  const status = useSelector(state => state.application.responseOptions?.status)
+export default function ErrorPage({
+  error,
+}: {
+  error: { message: string; stack?: string }
+}) {
+  const status = useSelector(
+    (state) => state.application.responseOptions?.status,
+  )
 
   return (
     <div>

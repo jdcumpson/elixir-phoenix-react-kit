@@ -1,0 +1,74 @@
+{
+  "[elixir]": {
+    "editor.defaultFormatter": "JakeBecker.elixir-ls",
+    "editor.formatOnType": true,
+    "editor.insertSpaces": true,
+    "editor.snippetSuggestions": "inline",
+    "editor.tabSize": 2,
+    "editor.trimAutoWhitespace": false,
+    "editor.wordBasedSuggestions": "off",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "javascript.preferences.importModuleSpecifier": "non-relative",
+    "javascript.preferences.useAliasesForRenames": true,
+    "javascript.suggest.enabled": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "typescript.preferences.useAliasesForRenames": true,
+    "typescript.suggest.enabled": true
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.preferences.importModuleSpecifier": "non-relative",
+    "typescript.preferences.useAliasesForRenames": true,
+    "typescript.suggest.enabled": true
+  },
+  "typescript.format.semicolons": "remove",
+  "javascript.format.semicolons": "remove",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "editor.defaultFormatter": "rvest.vs-code-prettier-eslint",
+  "editor.fontFamily": "Fira Code",
+  "editor.fontLigatures": true,
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "none",
+  "editor.tabSize": 2,
+  "elixirLS.dialyzerFormat": "dialyxir_short",
+  "elixirLS.fetchDeps": true,
+  "elixirLS.mixEnv": "dev",
+  "elixirLS.suggestSpecs": false,
+  "emmet.showExpandedAbbreviation": "inMarkupAndStylesheetFilesOnly",
+  "eslint.workingDirectories": [
+    {
+      "mode": "auto"
+    }
+  ],
+  "files.associations": {
+    "*.eex": "eex",
+    "*.heex": "html-eex"
+  },
+  "git.confirmSync": false,
+  "github.copilot.enable": {
+    "*": false,
+    "markdown": false,
+    "plaintext": false,
+    "scminput": false
+  },
+  "notebook.formatOnCellExecution": true,
+  "notebook.formatOnSave.enabled": true,
+  "workbench.colorTheme": "Default Light+"
+}
