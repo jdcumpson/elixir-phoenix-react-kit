@@ -3,6 +3,10 @@ defmodule PhoenixReactKit.SSR do
 
   @default_max_retries 5
   @default_timeout_ms 5_000
+  @hop_by_hop ~w(
+    connection keep-alive proxy-authenticate proxy-authorization te trailers
+    transfer-encoding upgrade content-length
+  )a
 
   def render(conn, assigns, opts \\ []) do
     attempts = Keyword.get(opts, :attempts, 0)
@@ -55,30 +59,58 @@ defmodule PhoenixReactKit.SSR do
     end
   end
 
-  defp loop(%Plug.Conn{} = conn, %HTTPoison.AsyncResponse{id: id} = response, status \\ nil) do
-    receive do
-      %HTTPoison.AsyncStatus{id: ^id, code: code} ->
-        {:ok, response} = HTTPoison.stream_next(response)
-        loop(conn, response, code)
+  defp loop(%Plug.Conn{} = conn, %HTTPoison.AsyncResponse{id: id} = response, status \\ 200) do
+  receive do
+    %HTTPoison.AsyncStatus{id: ^id, code: code} ->
+      {:ok, response} = HTTPoison.stream_next(response)
+      loop(conn, response, code)
 
-      %HTTPoison.AsyncHeaders{id: ^id, headers: headers} ->
-        conn =
-          Enum.reduce(headers, conn, fn {k, v}, conn ->
-            Plug.Conn.put_resp_header(conn, k, v)
-          end)
+    %HTTPoison.AsyncHeaders{id: ^id, headers: headers} ->
+      conn =
+        Enum.reduce(headers, conn, fn {k, v}, conn ->
+          k_down = String.downcase(k)
 
-        conn = Plug.Conn.send_chunked(conn, status)
+          if k_down in @hop_by_hop do
+            conn
+          else
+            Plug.Conn.put_resp_header(conn, k_down, v)
+          end
+        end)
 
-        {:ok, response} = HTTPoison.stream_next(response)
-        loop(conn, response, status)
+      conn =
+  Enum.reduce(headers, conn, fn {k, v}, conn ->
+    k = String.downcase(k)
 
-      %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
-        {:ok, conn} = Plug.Conn.chunk(conn, chunk)
-        {:ok, response} = HTTPoison.stream_next(response)
-        loop(conn, response, status)
-
-      %HTTPoison.AsyncEnd{id: ^id} ->
-        conn
+    if k in @hop_by_hop do
+      conn
+    else
+      # use replace for most headers
+      if k == "set-cookie" do
+        Plug.Conn.put_resp_header(conn, k, v)      # allow multiple cookies
+      else
+        Plug.Conn.put_resp_header(conn, k, v)      # or replace_resp_header (see below)
+      end
     end
+  end)
+
+# Nuke these no matter what happened upstream or earlier in the stack
+conn =
+  conn
+  |> Plug.Conn.delete_resp_header("transfer-encoding")
+  |> Plug.Conn.delete_resp_header("content-length")
+  |> Plug.Conn.delete_resp_header("connection")
+      conn = Plug.Conn.send_chunked(conn, status)
+
+      {:ok, response} = HTTPoison.stream_next(response)
+      loop(conn, response, status)
+
+    %HTTPoison.AsyncChunk{id: ^id, chunk: chunk} ->
+      {:ok, conn} = Plug.Conn.chunk(conn, chunk)
+      {:ok, response} = HTTPoison.stream_next(response)
+      loop(conn, response, status)
+
+    %HTTPoison.AsyncEnd{id: ^id} ->
+      conn
   end
+end
 end

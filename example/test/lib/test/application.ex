@@ -9,7 +9,7 @@ defmodule Test.Application do
   def start(_type, _args) do
     children = [
       TestWeb.Telemetry,
-      Test.Repo,
+#      Test.Repo,
       {DNSCluster, query: Application.get_env(:test, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Test.PubSub},
       # Start a worker by calling: Test.Worker.start_link(arg)

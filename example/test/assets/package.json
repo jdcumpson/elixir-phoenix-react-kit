@@ -13,6 +13,7 @@
     "@types/babel__traverse": "^7",
     "@types/express": "^5",
     "@types/history": "^5.0.0",
+    "@types/lodash": "^4",
     "@types/lodash.merge": "^4",
     "@types/phoenix": "^1",
     "@types/react": "^19.2.9",
@@ -44,10 +45,12 @@
     "@mui/lab": "^7.0.1-beta.21",
     "@mui/material": "^7.3.7",
     "@mui/x-data-grid": "^8.27.0",
+    "@reduxjs/toolkit": "^2.11.2",
     "@vitejs/plugin-react": "^5.1.2",
     "date-fns": "^4.1.0",
     "express": "^5.2.1",
     "history": "^5.3.0",
+    "lodash": "^4.17.23",
     "lodash.merge": "^4.6.2",
     "motion": "^12.34.3",
     "path-to-regexp": "^8.3.0",
@@ -58,5 +61,6 @@
     "react-error-boundary": "^6.1.0",
     "react-redux": "^9.1.2",
     "uuid": "^13.0.0"
-  }
+  },
+  "packageManager": "yarn@4.12.0+sha512.f45ab632439a67f8bc759bf32ead036a1f413287b9042726b7cc4818b7b49e14e9423ba49b18f9e06ea4941c1ad062385b1d8760a8d5091a1a31e5f6219afca8"
 }
