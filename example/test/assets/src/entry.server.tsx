@@ -13,6 +13,12 @@ import { ApplicationState, DEFAULT_STATE } from '@/domains/app/redux'
 import { NotFoundError } from '@/domains/app/router'
 import { AppState, createStore } from '@/redux'
 
+type ScriptTag = {
+  raw: string
+  attributes: Record<string, string | true>
+  content: string
+}
+
 async function readJsonBody<T>(request: http.IncomingMessage) {
   const chunks: Buffer[] = []
   for await (const chunk of request) {
@@ -28,14 +34,21 @@ async function readJsonBody<T>(request: http.IncomingMessage) {
   return JSON.parse(raw) as T
 }
 
-function createInlineModuleInjector(scripts: string[]) {
+function createInlineModuleInjector(
+  scripts: string[],
+  config?: { env: 'prod' | 'dev' },
+) {
   if (scripts.length === 0) {
     return null
   }
 
-  const injection =
-    scripts.map((code) => `<script type="module">${code}</script>`).join('') +
-    '\n<script type="module" src="http://localhost:4100/@vite/client"></script>'
+  let injection = scripts
+    .map((code) => `<script type="module">${code}</script>`)
+    .join('')
+  if (config?.env === 'dev') {
+    injection +=
+      '\n<script type="module" src="http://localhost:4100/@vite/client"></script>'
+  }
 
   let injected = false
   let tail = ''
@@ -78,6 +91,8 @@ export async function render(
   request: Request,
   response: Response,
   inlineModuleScripts: string[] = [],
+  scriptTags: ScriptTag[] = [],
+  options?: { env: 'prod' | 'dev' },
 ) {
   response.setHeader('Content-Type', 'text/html')
   if (request.method === 'GET') {
@@ -104,6 +119,21 @@ export async function render(
     ),
   )
 
+  const bootstrapModules: string[] =
+    options?.env === 'dev'
+      ? scriptTags
+          .map((st) =>
+            typeof st.attributes.src === 'string'
+              ? `http://localhost:4100${st.attributes.src}`
+              : null,
+          )
+          .filter((x) => x != null)
+      : scriptTags
+          .map((st) =>
+            typeof st.attributes.src === 'string' ? st.attributes.src : null,
+          )
+          .filter((x) => x != null)
+
   return new Promise((resolve) => {
     const finish = () => resolve(response)
     const { pipe, abort } = renderToPipeableStream(
@@ -113,7 +143,7 @@ export async function render(
         </StrictMode>
       </>,
       {
-        bootstrapModules: [`http://localhost:4100/src/entry.client.tsx`],
+        bootstrapModules,
         onShellReady: () => {
           response.status(
             store.getState().application.responseOptions?.status ?? 200,
@@ -122,6 +152,7 @@ export async function render(
             inlineModuleScripts.concat(
               `window.__STATE__ = ${JSON.stringify(store.getState(), null, 2)}`,
             ),
+            { env: options?.env ?? 'prod' },
           )
           if (injector) {
             pipe(injector)
@@ -166,9 +197,7 @@ export async function render(
                   <App store={store} />
                 </StrictMode>,
                 {
-                  bootstrapModules: [
-                    `http://localhost:4100/src/entry.client.tsx`,
-                  ],
+                  bootstrapModules,
                   onShellReady() {
                     response.status(status)
                     const injector = createInlineModuleInjector(
