@@ -3,6 +3,8 @@ defmodule Test.BlackScholes.RateCurve do
   Helpers for fetching and parsing risk-free rate curves.
   """
 
+  use Agent
+
   @type curve_point :: {pos_integer, float}
 
   @treasury_base_url "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/all"
@@ -30,6 +32,10 @@ defmodule Test.BlackScholes.RateCurve do
     "DGS30" => 10950
   }
 
+  def start_link(initial_value) do
+    Agent.start_link(fn -> initial_value end, name: __MODULE__)
+  end
+
   @doc """
   Fetches Treasury.gov daily bill rates via the CSV endpoint.
 
@@ -43,16 +49,46 @@ defmodule Test.BlackScholes.RateCurve do
   @spec fetch_treasury_curve(keyword) :: {:ok, [curve_point]} | {:error, term}
   def fetch_treasury_curve(opts \\ []) do
     url = Keyword.get(opts, :url, @treasury_base_url)
-    date = Keyword.get(opts, :date)
-    month = treasury_month(opts)
+
+    date =
+      Keyword.get(
+        opts,
+        :date,
+        DateTime.utc_now()
+      )
+      |> Timex.beginning_of_day()
+
+    month = treasury_month(date: date |> DateTime.to_date())
     field_map = Keyword.get(opts, :field_map, @treasury_bill_field_map)
     rate_scale = Keyword.get(opts, :rate_scale, 0.01)
+    attempts = Keyword.get(opts, :attempts, 0)
 
-    csv_url = treasury_csv_url(url, month)
+    if attempts > 5 do
+      {:error, :could_not_find_rates}
+    else
+      cached =
+        Agent.get(__MODULE__, fn state ->
+          Map.get(state, date)
+        end)
 
-    with {:ok, csv} <- http_get_csv(csv_url),
-         {:ok, curve} <- treasury_curve_from_csv(csv, date, field_map, rate_scale) do
-      {:ok, curve}
+      if is_nil(cached) do
+        csv_url =
+          treasury_csv_url(url, month)
+
+        with {:ok, csv} <- http_get_csv(csv_url),
+             {:ok, curve} <- treasury_curve_from_csv(csv, field_map, rate_scale) do
+          Agent.update(__MODULE__, fn state ->
+            Map.put(state, date, curve)
+          end)
+
+          {:ok, curve}
+        else
+          {:error, :empty_csv} ->
+            fetch_treasury_curve(date: Timex.shift(date, months: -1), attempts: attempts + 1)
+        end
+      else
+        {:ok, cached}
+      end
     end
   end
 
@@ -195,10 +231,10 @@ defmodule Test.BlackScholes.RateCurve do
     end
   end
 
-  defp treasury_curve_from_csv(csv, date, field_map, rate_scale) do
+  defp treasury_curve_from_csv(csv, field_map, rate_scale) do
     with {:ok, {headers, rows}} <- parse_csv(csv),
          {:ok, date_index} <- header_index(headers, "Date"),
-         {:ok, row} <- select_csv_row(rows, date_index, date),
+         {:ok, row} <- select_csv_row(rows, date_index),
          {:ok, curve} <- curve_from_row(headers, row, field_map, rate_scale) do
       {:ok, curve}
     end
@@ -270,28 +306,13 @@ defmodule Test.BlackScholes.RateCurve do
     end
   end
 
-  defp select_csv_row(rows, date_index, nil) do
+  defp select_csv_row(rows, date_index) do
     rows
     |> Enum.map(&row_with_date(&1, date_index))
     |> Enum.reject(&is_nil/1)
     |> case do
       [] -> {:error, :no_data}
       dated_rows -> {:ok, Enum.max_by(dated_rows, &elem(&1, 0)) |> elem(1)}
-    end
-  end
-
-  defp select_csv_row(rows, date_index, date) do
-    target_date = normalize_date!(date)
-
-    rows
-    |> Enum.map(&row_with_date(&1, date_index))
-    |> Enum.find(fn
-      {date_value, _} -> date_value == target_date
-      nil -> false
-    end)
-    |> case do
-      {_, row} -> {:ok, row}
-      nil -> {:error, {:missing_date, Date.to_iso8601(target_date)}}
     end
   end
 

@@ -16,13 +16,14 @@ defmodule Test.Application do
       # {Test.Worker, arg},
       # Start to serve requests, typically the last entry
       TestWeb.Endpoint,
+      Test.Ticker,
       Test.Yahoo,
       Test.Yahoo.CrumbPool,
       Test.Equities,
       {Registry, keys: :unique, name: Test.Ticker.Registry},
-      Test.Ticker,
       {Registry, keys: :unique, name: Test.Options.Registry},
-      Test.Options
+      Test.Options,
+      {Test.BlackScholes.RateCurve, %{}}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

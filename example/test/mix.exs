@@ -53,13 +53,14 @@ defmodule Test.MixProject do
       {:req, "~> 0.5"},
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 1.0"},
+      {:gettext, "~> 0.9"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:phoenix_react_kit, path: "../../"},
       {:httpoison, "~> 2.0"},
-      {:tz, "~> 0.28"}
+      {:tz, "~> 0.28"},
+      {:timex, "~> 3.0"}
     ]
   end
 
